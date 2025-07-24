@@ -1,0 +1,53 @@
+html, body{
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+body{
+    display: flex;
+    flex-direction: column;
+    font-family: "Inter", sans-serif;
+}
+
+header{
+    display: flex;
+    align-items: center;
+    padding: 0 3rem;
+    min-height: 4rem;
+    background-color: white;
+    border-radius: 0 0 1.5rem 1.5rem;
+    box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+h1{
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0;
+    padding: 0;
+    color: #1A1A1A;
+}
+
+h2{
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin: 0;
+    padding: 0;
+}
+
+.menu{
+    margin-left: auto;
+}
+
+.menu a{
+    text-decoration: none;
+    color: #1A1A1A;
+    margin-left: 1rem;
+}
+
+main{
+    margin: 0;
+    padding: 3rem 7rem;
+    flex: 1;
+}
