@@ -66,6 +66,13 @@ h2{
     border: #2c3d75 2px solid;
 }
 
+.menu a.active{
+    background-color: #2c3d75;
+    color: #fff;
+    border: #2c3d75 2px solid;
+}
+
+
 main{
     margin: 0;
     padding: 3rem 7rem;
