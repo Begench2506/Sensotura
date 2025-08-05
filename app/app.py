@@ -25,5 +25,9 @@ def index():
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()  # Создаем таблицы при первом запуске
+        try:
+            db.create_all()
+            print("Таблицы успешно созданы")
+        except Exception as e:
+            print(f"Ошибка при создании таблиц: {e}")
     app.run(debug=True)
