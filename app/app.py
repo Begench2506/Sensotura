@@ -13,24 +13,7 @@ db.init_app(app)
 
 @app.route('/')
 def index():
-    now = datetime.utcnow()
-    yesterday = now - timedelta(hours=24)
-
-    recent_data = (
-        TempData.query
-        .filter(TempData.datetime >= yesterday)
-        .order_by(TempData.datetime)
-        .all()
-    )
-
-    chart_data = [
-        {"sensor_id": row.sensor_id, "tvalue": row.tvalue, "datetime": row.datetime.strftime('%Y-%m-%d %H:%M')}
-        for row in recent_data
-    ]
-
-    print(chart_data)
-
-    return render_template('index.html', data=chart_data)
+    return render_template('index.html')
 
 
 if __name__ == '__main__':
