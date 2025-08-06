@@ -1,11 +1,55 @@
 {% extends 'base.html' %}
 
-{% block title %}
-    SENSOTURA
-{% endblock %}
-
+{% block title %}Sensotura{% endblock %}
+ 
 {% block main %}
     <div class="generalIndicators">
         <h2>Общие показатели</h2>
+
+        <canvas id="tempChart" height="100"></canvas>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const rawData =  { data | tojson };
+
+            const grouped = {};
+
+            rawData.forEach(entry => {
+                if (!grouped[entry.sensor_id]) {
+                    grouped[entry.sensor_id] = { labels: [], values: [] };
+                }
+                grouped[entry.sensor_id].labels.push(entry.datetime);
+                grouped[entry.sensor_id].values.push(entry.tvalue);
+            });
+
+            const colors = ['#3b82f6', '#f59e0b', '#ef4444', '#10b981', '#8b5cf6'];
+
+            const datasets = Object.entries(grouped).map(([sensor_id, group], i) => ({
+                label: `Холодильник ${sensor_id}`,
+                data: group.values,
+                fill: false,
+                borderColor: colors[i % colors.length],
+                tension: 0.3
+            }));
+
+            const ctx = document.getElementById('tempChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: grouped[Object.keys(grouped)[0]].labels, // используем метки от первого сенсора
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { display: true, title: { display: true, text: 'Время' } },
+                        y: { display: true, title: { display: true, text: 'Температура (°C)' } }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        </script>
     </div>
 {% endblock %}
