@@ -84,3 +84,8 @@ main{
     justify-content: center;
     align-items: center;
 }
+
+.tempChart{
+    margin-top: 2rem;
+    font-family: "Inter", sans-serif;
+}

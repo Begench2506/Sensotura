@@ -10,6 +10,3 @@ class TempData(db.Model):
     sensor_id = db.Column(db.Integer)
     tvalue = db.Column(db.Float)
     datetime = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    def __repr__(self):
-        return f'<MusTun id={self.id}, sensor_id={self.sensor_id}, tvalue={self.tvalue}, datetime={self.datetime}>'

@@ -1,26 +1,30 @@
-from flask import Flask, render_template, request, redirect, url_for
-from sqlalchemy import text
+from flask import Flask, render_template
+from sqlalchemy import text, desc
 from models import db, TempData
-from config import DevelopmentConfig 
+from config import DevelopmentConfig
 from datetime import datetime, timedelta
-import os
+import traceback
 
 app = Flask(__name__)
-
 app.config.from_object(DevelopmentConfig)
-
 db.init_app(app)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    """Главная – 24 последних измерения"""
+    # Берём 24 самых свежих записи и разворачиваем в хронологический порядок
+    recent = (TempData.query.order_by(desc(TempData.datetime)).limit(20).all()[::-1])
+
+    chart_data = [
+        {
+            "ts": row.datetime.strftime('%H:%M'),  # подпись на оси X
+            "temp": row.tvalue
+        } for row in recent
+    ]
+    return render_template('index.html', chart_data=chart_data)
 
 
 if __name__ == '__main__':
     with app.app_context():
-        try:
-            db.create_all()
-            print("Таблицы успешно созданы")
-        except Exception as e:
-            print(f"Ошибка при создании таблиц: {e}")
+        db.create_all()
     app.run(debug=True)
