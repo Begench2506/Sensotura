@@ -14,7 +14,7 @@ def index():
     """Главная – 24 последних измерения"""
     # Берём 24 самых свежих записи и разворачиваем в хронологический порядок
     recent = (TempData.query.order_by(desc(TempData.datetime)).limit(20).all()[::-1])
-
+    
     chart_data = [
         {
             "ts": row.datetime.strftime('%H:%M'),  # подпись на оси X

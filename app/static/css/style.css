@@ -89,3 +89,7 @@ main{
     margin-top: 2rem;
     font-family: "Inter", sans-serif;
 }
+
+.fridges{
+    display: flex;
+}
