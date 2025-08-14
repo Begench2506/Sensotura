@@ -13,7 +13,7 @@ db.init_app(app)
 def index():
     """Главная – 24 последних измерения"""
     # Берём 24 самых свежих записи и разворачиваем в хронологический порядок
-    recent = (TempData.query.order_by(desc(TempData.datetime)).limit(20).all()[::-1])
+    recent = (TempData.query.order_by(desc(TempData.datetime)).limit(12).all()[::-1])
     
     chart_data = [
         {

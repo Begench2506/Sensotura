@@ -88,8 +88,17 @@ main{
 .tempChart{
     margin-top: 2rem;
     font-family: "Inter", sans-serif;
+    /* border: #9b9b9b 1px solid; */
+    /* padding: 1rem; */
 }
 
 .fridges{
     display: flex;
+}
+
+.fridge{
+    min-height: 2rem;
+    min-width: 5rem;
+    border: #9b9b9b 2px solid;
+    border-radius: 0.5rem;
 }
