@@ -81,8 +81,8 @@ main{
 
 .generalIndicators h2{
     display: flex;
-    justify-content: center;
-    align-items: center;
+    /* justify-content: center;
+    align-items: center; */
 }
 
 .tempChart{
@@ -101,4 +101,21 @@ main{
     min-width: 5rem;
     border: #9b9b9b 2px solid;
     border-radius: 0.5rem;
+}
+
+.chartContainer {
+    border: 2px solid #e5e7eb;         /* светло-серая рамка */
+    border-radius: 12px;               /* скругление углов */
+    padding: 16px;                     /* отступ внутри */
+    background-color: #fff;            /* фон (если нужен) */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);  /* лёгкая тень */
+    max-width: 100%;                   /* адаптивность */
+    margin-top: 20px;
+}
+
+/* Убираем авторастяжение у canvas, чтобы избежать размытия */
+canvas#tempChart {
+    display: block;
+    max-width: 100%;
+    height: auto;
 }

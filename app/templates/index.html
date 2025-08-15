@@ -12,12 +12,13 @@
 
         </div>
     </div> -->
-    <canvas class="tempChart" id="tempChart" height="110"></canvas>
+    <div class="chartContainer">
+        <canvas class="tempChart" id="tempChart" height="110"></canvas>
+    </div>
 </div>
 
-
 <script>
-    /* Данные получили из Flask → Jinja → JSON */
+     /* Данные получили из Flask → Jinja → JSON */
     const chartData = {{ chart_data | tojson | safe }};
 
     /* Разбиваем на две оси: подписи и значения */
