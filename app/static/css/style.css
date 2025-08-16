@@ -104,13 +104,12 @@ main{
 }
 
 .chartContainer {
-    border: 2px solid #e5e7eb;         /* светло-серая рамка */
-    border-radius: 12px;               /* скругление углов */
-    padding: 16px;                     /* отступ внутри */
+    border-radius: 1rem;               /* скругление углов */
+    padding: 1rem;                     /* отступ внутри */
     background-color: #fff;            /* фон (если нужен) */
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);  /* лёгкая тень */
+    box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.1);  /* лёгкая тень */
     max-width: 100%;                   /* адаптивность */
-    margin-top: 20px;
+    margin-top: 1rem;
 }
 
 /* Убираем авторастяжение у canvas, чтобы избежать размытия */
