@@ -7,19 +7,22 @@
 
 <div class="generalIndicators">
     <h2>Общие показатели</h2>
-    <div class="fridges">
+    <!-- <div class="fridges">
         <div class="fridge">
 
         </div>
-    </div>
+    </div> -->
     <div class="chartContainer">
-        <canvas class="tempChart" id="tempChart" height="110"></canvas>
+        <canvas class="tempChart" id="tempChart"></canvas>
     </div>
 </div>
 
 <script>
 const labels = {{ labels | tojson }};
 const datasets = {{ datasets | tojson }};
+
+console.log('Chart labels:', labels);
+console.log('Chart datasets:', datasets);
 
 const ctx = document.getElementById('tempChart').getContext('2d');
 new Chart(ctx, {
@@ -30,6 +33,8 @@ new Chart(ctx, {
     },
     options: {
         responsive: true,
+        spanGaps: false,
+        maintainAspectRatio: false,
         scales: {
             x: {
                 title: { display: false },
@@ -49,6 +54,6 @@ new Chart(ctx, {
         }
     }
 });
-</script>
+</script>   
 
 {% endblock %}
