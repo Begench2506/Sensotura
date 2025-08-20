@@ -94,13 +94,17 @@ main{
 
 .fridges{
     display: flex;
+    margin: 2rem 0 3rem;
 }
 
 .fridge{
     min-height: 2rem;
     min-width: 5rem;
-    border: #9b9b9b 2px solid;
-    border-radius: 0.5rem;
+    background-color: #fff; 
+    border-radius: 1rem;
+    box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.1);   
+    margin-right: 2rem; 
+    width: 20%;
 }
 
 .chartContainer {
@@ -110,6 +114,7 @@ main{
     box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.1);  /* лёгкая тень */
     max-width: 100%;                   /* адаптивность */
     margin-top: 1rem;
+    border
 }
 
 /* Убираем авторастяжение у canvas, чтобы избежать размытия */

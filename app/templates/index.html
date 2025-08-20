@@ -6,54 +6,75 @@
 
 
 <div class="generalIndicators">
-    <h2>Общие показатели</h2>
-    <!-- <div class="fridges">
-        <div class="fridge">
 
+    <h2>Текущая температура устройств</h2>
+    <div class="fridges">
+        {% for fridge in fridges %}
+        <div class="fridge">
+            <h3>{{ fridge.name }}</h3>
+            {% if fridge.last_temp <= -35 %} 
+                <p style="color: #1b922f">{{ fridge.last_temp }} °C</p>
+            {% elif -35 < fridge.last_temp <= -30  %}
+                <p style="color: #f59e0b">{{ fridge.last_temp }} °C</p>
+            {% elif fridge.last_temp > -30 %}
+                <p style="color: #ef4444">{{ fridge.last_temp }} °C</p>
+            {% endif %}
+            <p>Обновлено: {{ fridge.last_time }}</p>
         </div>
-    </div> -->
+        {% endfor %}
+    </div>
+    <h2>График температуры устройств за последние 12 часов</h2>
     <div class="chartContainer">
         <canvas class="tempChart" id="tempChart"></canvas>
     </div>
 </div>
 
 <script>
-const labels = {{ labels | tojson }};
-const datasets = {{ datasets | tojson }};
+    const labels = {{ labels | tojson }};
+    const datasets = {{ datasets | tojson }};
 
-console.log('Chart labels:', labels);
-console.log('Chart datasets:', datasets);
+    console.log('Chart labels:', labels);
+    console.log('Chart datasets:', datasets);
 
-const ctx = document.getElementById('tempChart').getContext('2d');
-new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: labels,
-        datasets: datasets
-    },
-    options: {
-        responsive: true,
-        spanGaps: false,
-        maintainAspectRatio: false,
-        scales: {
-            x: {
-                title: { display: false },
-                grid: { display: false, drawBorder: false }
+    const ctx = document.getElementById('tempChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            spanGaps: false,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    border: { display: false },
+                    grid: { display: false, drawBorder: false }
+                },
+                y: {
+                    border: { display: false },
+                    grid: {
+                        display: true,
+                        drawBorder: false,
+                        color: '#e5e7eb'
+                    }
+                }
             },
-            y: {
-                title: { display: false },
-                grid: {
-                    display: true,
-                    drawBorder: false,
-                    color: '#e5e7eb'
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'line',
+                        font: {
+                            family: 'Inter'
+                        }
+                    }
                 }
             }
-        },
-        plugins: {
-            legend: { position: 'bottom' }
         }
-    }
-});
-</script>   
+    });
+</script>
 
 {% endblock %}

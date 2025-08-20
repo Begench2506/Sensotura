@@ -12,6 +12,7 @@ db.init_app(app)
 
 @app.route('/')
 def index():
+    
     # Сколько последних записей брать по каждому датчику
     records_per_sensor = 12
 
@@ -65,10 +66,27 @@ def index():
             "borderColor": colors[i % len(colors)],
             "fill": False,
             "tension": 0.3,
-            "pointRadius": 3
+            "pointRadius": 5    
         })
 
-    return render_template("index.html", labels=labels, datasets=datasets)
+    fridges = Fridge.query.all()
+    fridge_data = []
+
+    for fridge in fridges:
+        last_temp = (
+            TempData.query
+            .filter_by(sensor_id=fridge.id)
+            .order_by(desc(TempData.datetime))
+            .first()
+        )
+
+        fridge_data.append({
+            "name": fridge.name,
+            "last_temp": last_temp.tvalue if last_temp else "Нет данных",
+            "last_time": last_temp.datetime.strftime('%H:%M %d.%m') if last_temp else "-"
+        })
+
+    return render_template("index.html", labels=labels, datasets=datasets, fridges=fridge_data)
 
 if __name__ == '__main__':
     with app.app_context():
