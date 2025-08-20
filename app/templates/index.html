@@ -18,61 +18,37 @@
 </div>
 
 <script>
-     /* Данные получили из Flask → Jinja → JSON */
-    const chartData = {{ chart_data | tojson | safe }};
+const labels = {{ labels | tojson }};
+const datasets = {{ datasets | tojson }};
 
-    /* Разбиваем на две оси: подписи и значения */
-    const labels = chartData.map(p => p.ts);
-    const values = chartData.map(p => p.temp);
-
-    const ctx = document.getElementById('tempChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Температура, °C',
-                data: values,
-                borderWidth: 2,
-                fill: false,
-                tension: 0.3,
-                borderColor: '#3b82f6',
-                pointRadius: 3
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                x: {
-                    title: { display: false },
-                    grid: {
-                        display: false,
-                        drawBorder: false,
-                        borderColor: 'transparent'
-                    },
-                    border: { display: false }, // ← для Chart.js 4+
-                    ticks: {
-                        drawTicks: false
-                    }
-                },
-                y: {
-                    title: { display: false },
-                    grid: {
-                        display: true,
-                        drawBorder: false,
-                        borderColor: 'transparent',
-                        color: '#e5e7eb'
-                    },
-                    border: { display: false },
-                    ticks: {
-                        drawTicks: false
-                    }
-                }
+const ctx = document.getElementById('tempChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: datasets
+    },
+    options: {
+        responsive: true,
+        scales: {
+            x: {
+                title: { display: false },
+                grid: { display: false, drawBorder: false }
             },
-            plugins: {
-                legend: { display: false }
+            y: {
+                title: { display: false },
+                grid: {
+                    display: true,
+                    drawBorder: false,
+                    color: '#e5e7eb'
+                }
             }
+        },
+        plugins: {
+            legend: { position: 'bottom' }
         }
-    });
+    }
+});
 </script>
+
 {% endblock %}
