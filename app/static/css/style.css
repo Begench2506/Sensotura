@@ -2,7 +2,7 @@ html, body{
     height: 100%;
     margin: 0;
     padding: 0;
-    background-color: #fdfdfd;
+    background-color: #232525;
 }
 
 body{
@@ -85,7 +85,7 @@ main{
 }
 
 .tempChart{
-    margin-top: 2rem;
+    /* margin-bottom: 0.5rem; */
     font-family: "Inter", sans-serif;
     /* border: #9b9b9b 1px solid; */
     /* padding: 1rem; */
@@ -156,11 +156,10 @@ main{
 .chartContainer {
     border-radius: 1rem;               /* скругление углов */
     padding: 1rem;                     /* отступ внутри */
-    background-color: #fff;            /* фон (если нужен) */
-    box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.1);  /* лёгкая тень */
+    background-color: #2A2C2C;            /* фон (если нужен) */
+    /* box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.1);  лёгкая тень */
     max-width: 100%;                   /* адаптивность */
-    margin: 1rem 0 2rem 0;
-    border
+    margin: 2rem 0 0 0;
 }
 
 /* Убираем авторастяжение у canvas, чтобы избежать размытия */
@@ -168,4 +167,15 @@ canvas#tempChart {
     display: block;
     max-width: 100%;
     height: 35rem;
+}
+
+.graph{
+    display: inline-flexbox;
+    justify-content: center;
+    align-items: center;
+    background-color: #262828;
+    padding: 2rem;
+    color: #fff;
+    border-radius: 1rem;
+    border: 0.1rem solid #373939;
 }

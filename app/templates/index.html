@@ -34,108 +34,139 @@
         </div>
         {% endfor %}
     </div>
-    <h2>График температуры устройств за последние 12 часов</h2>
-    <div class="chartContainer">
-        <canvas class="tempChart" id="tempChart"></canvas>
+    <div class="graph">
+        <h2>График температуры устройств за последние 12 часов</h2>
+        <div class="chartContainer">
+            <canvas class="tempChart" id="tempChart"></canvas>
+        </div>
     </div>
 </div>
 
 <script>
-    const labels = {{ labels | tojson }};
-    const datasets = {{ datasets | tojson }};
+  const labels = {{ labels | tojson }};
+  const datasets = {{ datasets | tojson }};
 
-    console.log('Chart labels:', labels);
-    console.log('Chart datasets:', datasets);
+  // Плагин мигания последней фактической точки
+  const blinkPlugin = {
+    id: 'blinkLastPoints',
+    afterDatasetDraw(chart, args) {
+      const { ctx } = chart;
+      const datasetIndex = args.index;
+      const meta = chart.getDatasetMeta(datasetIndex);
+      const dataset = chart.data.datasets[datasetIndex];
+      if (!meta.visible) return;
 
-    // 🔁 Плагин: мигающая последняя фактическая точка на каждой линии
-    const blinkPlugin = {
-        id: 'blinkLastPoints',
-        afterDatasetDraw(chart, args) {
-            const { ctx } = chart;
-            const datasetIndex = args.index;
-            const meta = chart.getDatasetMeta(datasetIndex);
-            const dataset = chart.data.datasets[datasetIndex];
-
-            if (!meta.visible) return;
-
-            // Найти последнюю не-null точку
-            let lastIndex = -1;
-            for (let i = dataset.data.length - 1; i >= 0; i--) {
-                if (dataset.data[i] !== null && dataset.data[i] !== undefined) {
-                    lastIndex = i;
-                    break;
-                }
-            }
-
-            if (lastIndex === -1 || !meta.data[lastIndex]) return;
-
-            const point = meta.data[lastIndex];
-            const now = Date.now();
-            const pulse = Math.abs(Math.sin(now / 300));
-            const radius = 5 + 2 * pulse;
-
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, radius, 0, 2 * Math.PI);
-            ctx.fillStyle = dataset.borderColor;
-            ctx.globalAlpha = 0.6 + 0.4 * pulse;
-            ctx.fill();
-            ctx.restore();
+      // ищем последнюю не-null точку
+      let lastIndex = -1;
+      for (let i = dataset.data.length - 1; i >= 0; i--) {
+        if (dataset.data[i] !== null && dataset.data[i] !== undefined) {
+          lastIndex = i;
+          break;
         }
-    };
+      }
+      if (lastIndex === -1 || !meta.data[lastIndex]) return;
 
-    const ctx = document.getElementById('tempChart').getContext('2d');
+      const point = meta.data[lastIndex];
+      const now = Date.now();
+      const pulse = Math.abs(Math.sin(now / 300));
+      const radius = 5 + 2 * pulse;
 
-    const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: datasets
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, radius, 0, 2 * Math.PI);
+      ctx.fillStyle = dataset.borderColor;
+      ctx.globalAlpha = 0.6 + 0.4 * pulse;
+      ctx.fill();
+      ctx.restore();
+    }
+  };
+
+  // Вариант B: точный «зазор» снизу легенды (кастомным плагином)
+  const legendGapPlugin = {
+    id: 'legendGap',
+    beforeInit(chart) {
+      const originalFit = chart.legend && chart.legend.fit;
+      if (!originalFit) return;
+      chart.legend.fit = function () {
+        originalFit.bind(this)();
+        // увеличиваем высоту легенды на N пикселей => отступ между легендой и графиком
+        this.height += 12; // настройте значение (например, 8–20)
+      };
+    }
+  };
+
+  const ctx = document.getElementById('tempChart').getContext('2d');
+
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      spanGaps: false,
+      maintainAspectRatio: false,
+
+      // Вариант A: общий отступ между легендой (сверху) и графиком
+      // Можно увеличить/уменьшить top, либо удалить блок, если используете плагин legendGapPlugin
+      layout: {
+        padding: {
+          top: 0,   // основной отступ между легендой (position: 'top') и областью графика
+          right: 0,
+          bottom: 0,
+          left: 0
+        }
+      },
+
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'line',
+            padding: 10,           // «воздух» внутри самой легенды
+            font: { family: 'Inter' }
+          }
+        }
+      },
+
+      scales: {
+        x: {
+          border: { display: false },
+          grid: {
+            display: true,
+            drawBorder: false,
+            color: '#373939'
+          },
+          ticks: {
+            padding: 10 // отступ меток
+          }
         },
-        options: {
-            responsive: true,
-            spanGaps: false,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    border: { display: false },
-                    grid: { display: false, drawBorder: false },
-                    ticks: {
-                        padding: 10  // отступ меток снизу
-                    }
-                },
-                y: {
-                    border: { display: false },
-                    grid: {
-                        display: true,
-                        drawBorder: false,
-                        color: '#e5e7eb'
-                    },
-                    ticks: {
-                        drawTicks: false
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        usePointStyle: true,
-                        pointStyle: 'line',
-                        font: {
-                            family: 'Inter'
-                        }
-                    }
-                }
-            },
-            animation: false  // отключаем общую анимацию, только мигание вручную
-        },
-        plugins: [blinkPlugin]
-    });
+        y: {
+          border: { display: false },
+          grid: {
+            display: true,
+            drawBorder: false,
+            color: '#373939'
+          },
+          ticks: {
+            drawTicks: false
+          }
+        }
+      },
 
-    // 🔄 Обновляем график каждые 100 мс для эффекта мигания
-    setInterval(() => chart.update('none'), 100);
+      animation: false // отключаем общую анимацию, мигание вручную
+    },
+
+    // Подключаем оба плагина. Если хватит одного из способов — удалите ненужный.
+    plugins: [legendGapPlugin, blinkPlugin]
+  });
+
+  // Обновление для эффекта мигания
+  setInterval(() => chart.update('none'), 100);
 </script>
+
 
 
 
