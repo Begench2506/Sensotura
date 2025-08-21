@@ -31,7 +31,7 @@ h1{
 
 h2{
     font-size: 1.5rem;
-    font-weight: 400;
+    font-weight: 450;
     margin: 0;
     padding: 0;
 }
@@ -81,8 +81,7 @@ main{
 
 .generalIndicators h2{
     display: flex;
-    /* justify-content: center;
-    align-items: center; */
+    margin: 0;
 }
 
 .tempChart{
@@ -94,7 +93,7 @@ main{
 
 .fridges{
     display: flex;
-    margin: 2rem 0 3rem;
+    margin: 1rem 0 2rem 0;
 }
 
 .fridge{
@@ -104,7 +103,40 @@ main{
     border-radius: 1rem;
     box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.1);   
     margin-right: 2rem; 
-    width: 20%;
+    width: 17%;
+    display: flex;
+    align-items: center;
+}
+
+.fridge_pic{
+    margin-right: 0.5rem;
+}
+
+.fridge_pic img{
+    height: 4.5rem;
+}
+
+.fridge_info{
+    line-height: 2rem;
+    padding: 0.5rem;
+}
+
+.fridge_info h3{
+    font-weight: 500;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.fridge_temp{
+    font-size: 1.7rem;
+    margin: 0;
+
+}
+
+.fridge_temp_lst_updt{
+    font-size: 0.7rem;
+    font-style: italic;
+    margin: 0;
 }
 
 .chartContainer {
@@ -113,7 +145,7 @@ main{
     background-color: #fff;            /* фон (если нужен) */
     box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.1);  /* лёгкая тень */
     max-width: 100%;                   /* адаптивность */
-    margin-top: 1rem;
+    margin: 1rem 0 2rem 0;
     border
 }
 
