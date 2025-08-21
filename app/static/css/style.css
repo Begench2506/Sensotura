@@ -130,6 +130,8 @@ main{
 .fridge_temp{
     font-size: 1.7rem;
     margin: 0;
+    display: flex;
+    align-items: center;
 
 }
 
@@ -137,6 +139,18 @@ main{
     font-size: 0.7rem;
     font-style: italic;
     margin: 0;
+}
+
+.blink{
+    font-size: 0.7rem; 
+    margin-left: 0.5rem;
+    animation: blink-animation 1s infinite;
+}
+
+@keyframes blink-animation {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 .chartContainer {

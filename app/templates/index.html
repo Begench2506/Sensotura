@@ -11,26 +11,26 @@
     <div class="fridges">
         {% for fridge in fridges %}
         <div class="fridge">
-           <div class="fridge_pic">
-                {% if fridge.last_temp <= -35 %}
-                <img src="{{ url_for('static', filename='img/greenTemp.png') }}">
-                {% elif -35 < fridge.last_temp <= -30 %}
-                <img src="{{ url_for('static', filename='img/orangeTemp.png') }}">
-                {% elif fridge.last_temp > -30 %}
-                <img src="{{ url_for('static', filename='img/redTemp.png') }}">
-                {% endif %}
-           </div>
-           <div class="fridge_info">
+            <div class="fridge_pic">
+                {% if fridge.last_temp <= -35 %} <img src="{{ url_for('static', filename='img/greenTemp.png') }}">
+                    {% elif -35 < fridge.last_temp <=-30 %} <img
+                        src="{{ url_for('static', filename='img/orangeTemp.png') }}">
+                        {% elif fridge.last_temp > -30 %}
+                        <img src="{{ url_for('static', filename='img/redTemp.png') }}">
+                        {% endif %}
+            </div>
+            <div class="fridge_info">
                 <h3>{{ fridge.name }}</h3>
-                {% if fridge.last_temp <= -35 %} 
-                <p class="fridge_temp" style="color: #1b922f">{{ fridge.last_temp }} °C</p>
-                {% elif -35 < fridge.last_temp <= -30  %}
-                <p class="fridge_temp" style="color: #f59e0b">{{ fridge.last_temp }} °C</p>
-                {% elif fridge.last_temp > -30 %}
-                <p class="fridge_temp" style="color: #ef4444">{{ fridge.last_temp }} °C</p>
-                {% endif %}
-                <p class="fridge_temp_lst_updt">Обновлено: {{ fridge.last_time }}</p>
-           </div>
+                {% if fridge.last_temp <= -35 %} <p class="fridge_temp" style="color: #1b922f">{{ fridge.last_temp }} °C
+                    <span class="blink">&#11044;</span></p>
+                    {% elif -35 < fridge.last_temp <=-30 %} <p class="fridge_temp" style="color: #f59e0b">{{
+                        fridge.last_temp }} °C <span class="blink">&#11044;</span></p>
+                        {% elif fridge.last_temp > -30 %}
+                        <p class="fridge_temp" style="color: #ef4444">{{ fridge.last_temp }} °C <span
+                                class="blink">&#11044;</span></p>
+                        {% endif %}
+                        <p class="fridge_temp_lst_updt">Обновлено: {{ fridge.last_time }}</p>
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -47,8 +47,46 @@
     console.log('Chart labels:', labels);
     console.log('Chart datasets:', datasets);
 
+    // 🔁 Плагин: мигающая последняя фактическая точка на каждой линии
+    const blinkPlugin = {
+        id: 'blinkLastPoints',
+        afterDatasetDraw(chart, args) {
+            const { ctx } = chart;
+            const datasetIndex = args.index;
+            const meta = chart.getDatasetMeta(datasetIndex);
+            const dataset = chart.data.datasets[datasetIndex];
+
+            if (!meta.visible) return;
+
+            // Найти последнюю не-null точку
+            let lastIndex = -1;
+            for (let i = dataset.data.length - 1; i >= 0; i--) {
+                if (dataset.data[i] !== null && dataset.data[i] !== undefined) {
+                    lastIndex = i;
+                    break;
+                }
+            }
+
+            if (lastIndex === -1 || !meta.data[lastIndex]) return;
+
+            const point = meta.data[lastIndex];
+            const now = Date.now();
+            const pulse = Math.abs(Math.sin(now / 300));
+            const radius = 5 + 2 * pulse;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, radius, 0, 2 * Math.PI);
+            ctx.fillStyle = dataset.borderColor;
+            ctx.globalAlpha = 0.6 + 0.4 * pulse;
+            ctx.fill();
+            ctx.restore();
+        }
+    };
+
     const ctx = document.getElementById('tempChart').getContext('2d');
-    new Chart(ctx, {
+
+    const chart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
@@ -61,7 +99,10 @@
             scales: {
                 x: {
                     border: { display: false },
-                    grid: { display: false, drawBorder: false }
+                    grid: { display: false, drawBorder: false },
+                    ticks: {
+                        padding: 10  // отступ меток снизу
+                    }
                 },
                 y: {
                     border: { display: false },
@@ -69,6 +110,9 @@
                         display: true,
                         drawBorder: false,
                         color: '#e5e7eb'
+                    },
+                    ticks: {
+                        drawTicks: false
                     }
                 }
             },
@@ -83,9 +127,16 @@
                         }
                     }
                 }
-            }
-        }
+            },
+            animation: false  // отключаем общую анимацию, только мигание вручную
+        },
+        plugins: [blinkPlugin]
     });
+
+    // 🔄 Обновляем график каждые 100 мс для эффекта мигания
+    setInterval(() => chart.update('none'), 100);
 </script>
+
+
 
 {% endblock %}
