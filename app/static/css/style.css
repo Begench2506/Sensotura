@@ -2,7 +2,7 @@ html, body{
     height: 100%;
     margin: 0;
     padding: 0;
-    background-color: #232525;
+    background-color: #F2F2F3;
 }
 
 body{
@@ -156,8 +156,8 @@ main{
 .chartContainer {
     border-radius: 1rem;               /* скругление углов */
     padding: 1rem;                     /* отступ внутри */
-    background-color: #2A2C2C;            /* фон (если нужен) */
-    /* box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.1);  лёгкая тень */
+    background-color: #ffffff;            /* фон (если нужен) */
+    box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.1);  лёгкая тень
     max-width: 100%;                   /* адаптивность */
     margin: 2rem 0 0 0;
 }
@@ -173,9 +173,9 @@ canvas#tempChart {
     display: inline-flexbox;
     justify-content: center;
     align-items: center;
-    background-color: #262828;
+    background-color: #FDFDFD;
     padding: 2rem;
-    color: #fff;
+    color: #121212;
     border-radius: 1rem;
-    border: 0.1rem solid #373939;
+    box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.1);
 }
