@@ -97,48 +97,64 @@ main{
 }
 
 .fridge{
-    min-height: 2rem;
-    min-width: 5rem;
+    height: auto;
     background-color: #fff; 
     border-radius: 1rem;
     box-shadow: 0 0.1rem 1rem rgba(0, 0, 0, 0.1);   
     margin-right: 2rem; 
-    width: 17%;
+    width: 15%;
+    padding: 1rem 1.5rem;
+}
+
+.fridge_info_top{
     display: flex;
     align-items: center;
 }
 
-.fridge_pic{
-    margin-right: 0.5rem;
-}
-
-.fridge_pic img{
-    height: 4.5rem;
-}
-
-.fridge_info{
-    line-height: 2rem;
-    padding: 0.5rem;
-}
-
-.fridge_info h3{
+.fridge_info_top h3{
     font-weight: 500;
     font-size: 1rem;
     margin: 0;
 }
 
+.fridge_info_top img{
+    height: 1.5rem;
+    margin-left: auto;
+}
+
+
+
+.fridge_info_mid{
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0;
+}
+
+
+
 .fridge_temp{
-    font-size: 1.7rem;
+    font-size: 2.5rem;
+    font-weight: 400;
     margin: 0;
     display: flex;
     align-items: center;
 
 }
 
-.fridge_temp_lst_updt{
-    font-size: 0.7rem;
-    font-style: italic;
+.fridge_info_line{
+    background-color: #E7E8EA;
+    height: 0.1rem;
+}
+
+.fridge_info_bottom{
+    margin-top: 0.7rem;
+    display: flex;
+    align-items: center;
+}
+
+.fridge_info_bottom p{
     margin: 0;
+    font-size: 0.7rem;
 }
 
 .blink{

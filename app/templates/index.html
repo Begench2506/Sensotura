@@ -11,26 +11,27 @@
     <div class="fridges">
         {% for fridge in fridges %}
         <div class="fridge">
-            <div class="fridge_pic">
-                {% if fridge.last_temp <= -35 %} <img src="{{ url_for('static', filename='img/greenTemp.png') }}">
-                    {% elif -35 < fridge.last_temp <=-30 %} <img
-                        src="{{ url_for('static', filename='img/orangeTemp.png') }}">
-                        {% elif fridge.last_temp > -30 %}
-                        <img src="{{ url_for('static', filename='img/redTemp.png') }}">
-                        {% endif %}
-            </div>
-            <div class="fridge_info">
-                <h3>{{ fridge.name }}</h3>
-                {% if fridge.last_temp <= -35 %} <p class="fridge_temp" style="color: #1b922f">{{ fridge.last_temp }} °C
-                    <span class="blink">&#11044;</span></p>
-                    {% elif -35 < fridge.last_temp <=-30 %} <p class="fridge_temp" style="color: #f59e0b">{{
-                        fridge.last_temp }} °C <span class="blink">&#11044;</span></p>
-                        {% elif fridge.last_temp > -30 %}
-                        <p class="fridge_temp" style="color: #ef4444">{{ fridge.last_temp }} °C <span
-                                class="blink">&#11044;</span></p>
-                        {% endif %}
-                        <p class="fridge_temp_lst_updt">Обновлено: {{ fridge.last_time }}</p>
-            </div>
+          <div class="fridge_info_top">
+            <h3>{{ fridge.name }}</h3>
+            {% if fridge.last_temp <= -35 %} <img src="{{ url_for('static', filename='img/greenTemp.png') }}">
+            {% elif -35 < fridge.last_temp <=-30 %} <img src="{{ url_for('static', filename='img/orangeTemp.png') }}">
+            {% elif fridge.last_temp > -30 %}<img src="{{ url_for('static', filename='img/redTemp.png') }}">
+            {% endif %}
+          </div>
+          <div class="fridge_info_mid">
+            {% if fridge.last_temp <= -35 %} <p class="fridge_temp" style="color: #1b922f">{{ fridge.last_temp }} °C </p>
+            {% elif -35 < fridge.last_temp <=-30 %} <p class="fridge_temp" style="color: #f59e0b">{{ fridge.last_temp }} °C </p>
+            {% elif fridge.last_temp > -30 %} <p class="fridge_temp" style="color: #ef4444">{{ fridge.last_temp }} °C </p>
+            {% endif %}
+          </div>
+          <div class="fridge_info_line"></div>
+          <div class="fridge_info_bottom">
+            <p class="fridge_temp_lst_updt">Обновлено: {{ fridge.last_time }}</p>
+            {% if fridge.last_temp <= -35 %} <p style="color: #1b922f; margin-left: auto"><span class="blink">&#11044;</span> Отлично</p>
+            {% elif -35 < fridge.last_temp <=-30 %} <p style="color: #f59e0b; margin-left: auto"><span class="blink">&#11044;</span> Нормально</p>
+            {% elif fridge.last_temp > -30 %} <p style="color: #ef4444; margin-left: auto"><span class="blink">&#11044;</span> Плохо</p>
+            {% endif %}
+          </div>
         </div>
         {% endfor %}
     </div>
@@ -137,7 +138,7 @@
           grid: {
             display: false,
             drawBorder: false,
-            color: '#b9b9b9'
+            color: '#E7E8EA'
           },
           ticks: {
             padding: 10 // отступ меток
@@ -148,7 +149,7 @@
           grid: {
             display: true,
             drawBorder: false,
-            color: '#b9b9b9'
+            color: '#E7E8EA'
           },
           ticks: {
             drawTicks: false
