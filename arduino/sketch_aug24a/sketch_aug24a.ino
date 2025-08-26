@@ -6,147 +6,111 @@
 #include <WiFiClientSecureBearSSL.h>
 #include <time.h>
 
-// ===== User settings =====
-const char* SSID       = "BEGA_MASHA";
-const char* PASS       = "!*25Be06ga15Ma04sha*!";
-const char* SERVER     = "https://beove.ru/api/post_temp.php";
-const int   SENSOR_ID  = 1;   // отправляем как число
+// ===== Network / Server =====
+const char* SSID   = "BEGA_MASHA";
+const char* PASS   = "!*25Be06ga15Ma04sha*!";
+const char* SERVER = "https://beove.ru/api/post_temp.php";
 
-// Period: every 5 minutes, aligned slots: :00, :05, :10 … :55 (UTC)
-const uint32_t SLOT_MINUTES   = 5;
+// Статический IP (под вашу сеть)
+IPAddress ip(192,168,1,101);
+IPAddress gw(192,168,1,1);
+IPAddress mask(255,255,255,0);
+IPAddress dns1(192,168,1,1);
+IPAddress dns2(8,8,8,8);
 
-// Time: keep UTC (если нужна МСК, выставить GMT_OFFSET = 3*3600 и использовать localtime_r)
-const char* NTP_SERVER_1 = "pool.ntp.org";
-const char* NTP_SERVER_2 = "time.google.com";
-const long  GMT_OFFSET   = 0;
-const int   DST_OFFSET   = 0;
+// ===== Payload =====
+const int SENSOR_ID = 1;  // отправляем числом
 
-// Timeouts (ms)
-const uint32_t WIFI_CONNECT_TIMEOUT_MS = 15000;
-const uint32_t NTP_SYNC_TIMEOUT_MS     = 4000;
-const uint32_t POST_TIMEOUT_MS         = 5000;
+// ===== Timings =====
+const uint32_t WIFI_CONNECT_TIMEOUT_MS = 15000;  // 15 s
+const uint32_t RETRY_CONNECT_TIMEOUT_MS = 12000; // повтор
+const uint32_t NTP_SYNC_TIMEOUT_MS     = 3000;   // 3 s
+const uint32_t POST_TIMEOUT_MS         = 5000;   // 5 s
+const uint32_t SLEEP_SEC               = 300;    // 5 минут
 
-// DS18B20
-const uint8_t ONE_WIRE_PIN = D2;    // GPIO4
-const uint8_t DS_RESOLUTION = 9;    // fast enough
+// ===== DS18B20 =====
+const uint8_t ONE_WIRE_PIN  = D2;   // GPIO4
+const uint8_t DS_RESOLUTION = 9;
 
-// RGB (common anode to 3V3; LOW = on, HIGH = off)
-const uint8_t PIN_LED_R = D3; // GPIO0 (boot pin)
-const uint8_t PIN_LED_G = D4; // GPIO2 (boot pin)
-const uint8_t PIN_LED_B = D1; // GPIO5 (safe)
-
-// Blink durations
-const uint16_t BLINK_ERR_MS   = 120; // error blink
-const uint16_t BLINK_OK_MS    = 80;  // success blink
+// ===== Time (UTC) — можно отключить, если не нужно =====
+const char* NTP1 = "pool.ntp.org";
+const char* NTP2 = "time.google.com";
+const long  GMT_OFFSET = 0;
+const int   DST_OFFSET = 0;
 
 // ===== Globals =====
 OneWire oneWire(ONE_WIRE_PIN);
 DallasTemperature sensors(&oneWire);
 
-enum class Phase { Idle, WaitingNextSlot, Measuring, Sending };
-Phase phase = Phase::Idle;
+// Встроенный LED на ESP8266 часто инверсный: LOW = ON, HIGH = OFF
+inline void ledOn()  { digitalWrite(LED_BUILTIN, LOW); }
+inline void ledOff() { digitalWrite(LED_BUILTIN, HIGH); }
 
-unsigned long nextActionMs = 0;  // миллисекунды (millis) для следующего шага
-bool haveTime = false;
-
-// —— Helpers ——
-void ledsAllOff() {
-  pinMode(PIN_LED_R, OUTPUT);
-  pinMode(PIN_LED_G, OUTPUT);
-  pinMode(PIN_LED_B, OUTPUT);
-  digitalWrite(PIN_LED_R, HIGH);
-  digitalWrite(PIN_LED_G, HIGH);
-  digitalWrite(PIN_LED_B, HIGH);
+void blinkBuiltin(uint8_t times, uint16_t on_ms = 150, uint16_t off_ms = 150) {
+  for (uint8_t i = 0; i < times; i++) {
+    ledOn();
+    delay(on_ms);
+    ledOff();
+    if (i + 1 < times) delay(off_ms);
+  }
 }
 
-void blinkRGB(bool r, bool g, bool b, uint16_t ms) {
-  ledsAllOff();
-  if (r) digitalWrite(PIN_LED_R, LOW);
-  if (g) digitalWrite(PIN_LED_G, LOW);
-  if (b) digitalWrite(PIN_LED_B, LOW);
-  delay(ms);
-  ledsAllOff();
+void blinkSuccessLong() {
+  ledOn();
+  delay(500);   // длинная вспышка
+  ledOff();
 }
 
-bool connectWiFi(uint32_t timeoutMs) {
+bool connectWiFi() {
   WiFi.mode(WIFI_STA);
   WiFi.persistent(false);
-  WiFi.setAutoReconnect(true);
-  WiFi.begin(SSID, PASS);
+  WiFi.setAutoReconnect(false);
 
-  Serial.print(F("Wi-Fi: connecting to '"));
-  Serial.print(SSID);
-  Serial.print(F("' ... "));
+  // Статический IP до begin()
+  WiFi.config(ip, gw, dns1, mask, dns2);
+
+  // Первая попытка
+  WiFi.begin(SSID, PASS);
   uint32_t start = millis();
-  while (WiFi.status() != WL_CONNECTED && (millis() - start) < timeoutMs) {
+  while (WiFi.status() != WL_CONNECTED && (millis() - start) < WIFI_CONNECT_TIMEOUT_MS) {
     delay(100);
   }
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.print(F("OK, IP="));
-    Serial.println(WiFi.localIP());
-    return true;
-  } else {
-    Serial.println(F("FAILED (timeout)"));
-    return false;
+  if (WiFi.status() == WL_CONNECTED) return true;
+
+  // Повторная
+  WiFi.disconnect(true);
+  delay(200);
+  WiFi.begin(SSID, PASS);
+  start = millis();
+  while (WiFi.status() != WL_CONNECTED && (millis() - start) < RETRY_CONNECT_TIMEOUT_MS) {
+    delay(100);
   }
+  return WiFi.status() == WL_CONNECTED;
 }
 
 time_t nowTs() { time_t n=0; time(&n); return n; }
-bool hasValidTime() { return nowTs() > 1700000000; } // после ~2023-11-14
+bool hasValidTime() { return nowTs() > 1700000000; }
 
 bool syncTimeNTP(uint32_t timeoutMs) {
-  Serial.print(F("NTP: syncing UTC... "));
-  configTime(GMT_OFFSET, DST_OFFSET, NTP_SERVER_1, NTP_SERVER_2);
+  configTime(GMT_OFFSET, DST_OFFSET, NTP1, NTP2);
   uint32_t start = millis();
   while (!hasValidTime() && (millis() - start) < timeoutMs) {
     delay(100);
   }
-  if (hasValidTime()) {
-    time_t now = nowTs();
-    struct tm t;
-    gmtime_r(&now, &t);
-    char ts[32];
-    strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", &t);
-    Serial.print(F("OK, UTC="));
-    Serial.println(ts);
-    return true;
-  } else {
-    Serial.println(F("FAILED"));
-    return false;
-  }
-}
-
-// Возвращает секунды до ближайшей пятиминутки (UTC)
-uint32_t secondsToNextAlignedSlotUTC() {
-  time_t now = nowTs();
-  struct tm t;
-  gmtime_r(&now, &t);
-  uint8_t m = t.tm_min;
-  uint8_t s = t.tm_sec;
-
-  uint8_t nextMin = ((m / SLOT_MINUTES) + 1) * SLOT_MINUTES;
-  uint8_t addMin  = (nextMin >= 60) ? (60 - m) : (nextMin - m);
-  // корректная формула: до «ровной минуты»
-  int32_t remain = (int32_t)addMin * 60 - (int32_t)s;
-  if (remain <= 0) remain = SLOT_MINUTES * 60;
-  return (uint32_t)remain;
+  return hasValidTime();
 }
 
 bool postTemperature(float tempC, int& httpCodeOut, String& bodyOut) {
-  httpCodeOut = -1000;
-  bodyOut = "";
+  httpCodeOut = -1000; bodyOut = "";
   if (WiFi.status() != WL_CONNECTED) return false;
 
   std::unique_ptr<BearSSL::WiFiClientSecure> client(new BearSSL::WiFiClientSecure);
-  client->setInsecure(); // no cert validation
+  client->setInsecure();
 
   HTTPClient http;
   http.setTimeout(POST_TIMEOUT_MS);
-  if (!http.begin(*client, SERVER)) {
-    return false;
-  }
+  if (!http.begin(*client, SERVER)) return false;
 
-  // JSON с числовым sensor_id
   http.addHeader("Content-Type", "application/json");
   String body = String("{\"sensor_id\":") + SENSOR_ID + ",\"tvalue\":" + String(tempC, 2) + "}";
   httpCodeOut = http.POST(body);
@@ -155,122 +119,90 @@ bool postTemperature(float tempC, int& httpCodeOut, String& bodyOut) {
   return (httpCodeOut == HTTP_CODE_OK);
 }
 
-// Планирует следующий «ровный» слот: ставит nextActionMs
-void scheduleNextAlignedSlot() {
-  if (!haveTime) {
-    // если нет времени — просто через 5 минут
-    nextActionMs = millis() + (uint32_t)SLOT_MINUTES * 60UL * 1000UL;
-    Serial.println(F("Align: no time; schedule fixed 5 min later"));
-    return;
-  }
-  uint32_t waitSec = secondsToNextAlignedSlotUTC();
-  nextActionMs = millis() + waitSec * 1000UL;
-  Serial.print(F("Align: next slot in "));
-  Serial.print(waitSec);
-  Serial.println(F(" sec"));
+void goDeepSleepSec(uint32_t sec) {
+  ESP.deepSleep((uint64_t)sec * 1000000ULL);
+  delay(50);
 }
 
 void setup() {
   Serial.begin(115200);
-  delay(50);
+  delay(30);
   Serial.println();
-  Serial.println(F("Boot: sensor node starting (no deep sleep)..."));
+  Serial.println(F("Boot: deep-sleep cycle start (no external LED)"));
 
-  // LEDs off
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
-  ledsAllOff();
+  ledOff(); // погасить
 
-  // Wi‑Fi
-  if (!connectWiFi(WIFI_CONNECT_TIMEOUT_MS)) {
-    // Wi‑Fi недоступен: красная вспышка, план через 5 мин по таймеру
-    blinkRGB(true, false, false, BLINK_ERR_MS);
-    haveTime = syncTimeNTP(NTP_SYNC_TIMEOUT_MS); // попробуем получить время через мобильный/другую сеть; если нет — всё равно планируем по таймеру
-    scheduleNextAlignedSlot();
-    phase = Phase::WaitingNextSlot;
+  // 1) Wi‑Fi
+  Serial.print(F("Wi‑Fi: connecting (static IP) ... "));
+  bool wifiOk = connectWiFi();
+  if (!wifiOk) {
+    Serial.println(F("FAILED"));
+    // Индикация: Wi‑Fi ошибка — тройное мигание
+    blinkBuiltin(3, 120, 130);
+    goDeepSleepSec(SLEEP_SEC);
     return;
   }
+  Serial.print(F("OK, IP="));
+  Serial.println(WiFi.localIP());
 
-  // NTP
-  haveTime = syncTimeNTP(NTP_SYNC_TIMEOUT_MS);
-  scheduleNextAlignedSlot();
-  phase = Phase::WaitingNextSlot;
+  // 2) (опционально) NTP
+  Serial.print(F("NTP: sync... "));
+  if (syncTimeNTP(NTP_SYNC_TIMEOUT_MS)) {
+    time_t now = nowTs();
+    struct tm t;
+    gmtime_r(&now, &t);
+    char ts[32];
+    strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", &t);
+    Serial.print(F("OK, UTC="));
+    Serial.println(ts);
+  } else {
+    Serial.println(F("FAILED (continue)"));
+  }
+
+  // 3) Измерение
+  Serial.println(F("Sensor: DS18B20 read..."));
+  sensors.begin();
+  sensors.setResolution(DS_RESOLUTION);
+  sensors.requestTemperatures();
+  float tempC = sensors.getTempCByIndex(0);
+  if (tempC == DEVICE_DISCONNECTED_C || isnan(tempC)) {
+    Serial.println(F("Error: DS18B20 not found/invalid. Sleep 5 min."));
+    // Можно поморгать 4 раза, если хотите особую индикацию датчика:
+    // blinkBuiltin(4, 120, 120);
+    goDeepSleepSec(SLEEP_SEC);
+    return;
+  }
+  Serial.print(F("Sensor: "));
+  Serial.print(tempC, 2);
+  Serial.println(F(" C"));
+
+  // 4) Отправка
+  Serial.print(F("HTTP: POST ... "));
+  int httpCode = -1000;
+  String resp;
+  bool ok = postTemperature(tempC, httpCode, resp);
+
+  if (!ok) {
+    Serial.print(F("FAILED, code="));
+    Serial.println(httpCode);
+    Serial.print(F("Body: "));
+    Serial.println(resp);
+    // Индикация: ошибка сервера/отправки — двойное мигание
+    blinkBuiltin(2, 150, 150);
+  } else {
+    Serial.println(F("OK (200)"));
+    Serial.print(F("Body: "));
+    Serial.println(resp);
+    // Индикация: успех — одно длинное мигание
+    blinkSuccessLong();
+  }
+
+  // 5) Сон на 5 минут
+  Serial.println(F("Sleep: 300 sec"));
+  goDeepSleepSec(SLEEP_SEC);
 }
 
 void loop() {
-  unsigned long nowMs = millis();
-
-  // поддерживаем Wi‑Fi (на случай, если роутер «засыпает»)
-  if (WiFi.status() != WL_CONNECTED) {
-    // попытка переподключения в фоне
-    static unsigned long lastRetry = 0;
-    if (nowMs - lastRetry > 5000) {
-      lastRetry = nowMs;
-      Serial.println(F("Wi‑Fi: reconnect..."));
-      WiFi.disconnect();
-      WiFi.begin(SSID, PASS);
-    }
-  }
-
-  switch (phase) {
-    case Phase::WaitingNextSlot:
-      if ((long)(nowMs - nextActionMs) >= 0) {
-        // пришло время слота
-        phase = Phase::Measuring;
-      }
-      break;
-
-    case Phase::Measuring: {
-      Serial.println(F("Sensor: requesting temperature..."));
-      sensors.begin();
-      sensors.setResolution(DS_RESOLUTION);
-      sensors.requestTemperatures();
-      float tempC = sensors.getTempCByIndex(0);
-      if (tempC == DEVICE_DISCONNECTED_C || isnan(tempC)) {
-        Serial.println(F("Error: DS18B20 not found or invalid reading."));
-        // планируем следующий слот
-        scheduleNextAlignedSlot();
-        phase = Phase::WaitingNextSlot;
-        return;
-      }
-      Serial.print(F("Sensor: temperature = "));
-      Serial.print(tempC, 2);
-      Serial.println(F(" C"));
-
-      // сразу отправка
-      phase = Phase::Sending;
-
-      // Отправка
-      int httpCode = -1000;
-      String resp;
-      bool ok = postTemperature(tempC, httpCode, resp);
-      if (!ok) {
-        Serial.print(F("HTTP: FAILED, code="));
-        Serial.println(httpCode);
-        Serial.print(F("HTTP body: "));
-        Serial.println(resp);
-        // оранжевая вспышка
-        blinkRGB(true, true, false, BLINK_ERR_MS);
-      } else {
-        Serial.println(F("HTTP: OK (200)"));
-        Serial.print(F("HTTP body: "));
-        Serial.println(resp);
-        // зелёная вспышка
-        blinkRGB(false, true, false, BLINK_OK_MS);
-      }
-
-      // спланировать следующий «ровный» слот
-      scheduleNextAlignedSlot();
-      phase = Phase::WaitingNextSlot;
-    } break;
-
-    case Phase::Sending:
-    case Phase::Idle:
-    default:
-      // ничего
-      break;
-  }
-
-  // чтобы цикл не крутился на полную
-  delay(10);
+  // не используется
 }
